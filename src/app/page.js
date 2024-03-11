@@ -7,18 +7,32 @@ import { Button } from "@/components/ui/button";
 import defaultImage from "@/assets/meo.webp";
 
 // Import api
-import {
-  getAllBlogs,
-  // getAllUniqueHashtags,
-  // getBlogsByHashtags,
-} from "@/service/api";
+import { getAllBlogs, getAllUniqueHashtags } from "@/service/api";
+
+export async function getBlogsByHashtags(hashtagsArray) {
+  if (hashtagsArray.length === 0) {
+    return getAllBlogs(); // Return all blogs if no hashtags are selected
+  }
+  const query = `
+    *[_type == "blog" && count((hashtags[][@ in $selectedHashtags])) > 0] {
+      title,
+      smallDescription,
+      'Slug': slug.current,
+      titleImage,
+      hashtags,
+      _createdAt
+    }
+  `;
+  const params = { selectedHashtags: hashtagsArray };
+  return await client.fetch(query, params);
+}
 
 export const revalidate = 30; // Update every 30 seconds
 
 export default async function Home() {
   const blogs = await getAllBlogs();
   // console.log(data);
-  // const allHashtags = await getAllUniqueHashtags();
+  const allHashtags = await getAllUniqueHashtags();
   // console.log("🏎 ~ Home ~ hashtags:", hashtags);
 
   // Format created date
